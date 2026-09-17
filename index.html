@@ -771,6 +771,47 @@
         downloadBtn.classList.add('hidden');
         if (ORIGINAL_PDF_URL) lockNotice.classList.remove('hidden');
       }
+      // 🌟 Previous Results വഴി ചോദ്യങ്ങളും ശരിയുത്തരങ്ങളും മാത്രം ലിസ്റ്റ് ചെയ്യുന്ന ഫംഗ്ഷൻ
+    function renderReviewOnlySolutions() {
+      const cont = document.getElementById('solutionsContainer');
+      cont.innerHTML = '';
+      const letters = ['A', 'B', 'C', 'D'];
+
+      questionsData.forEach((q, idx) => {
+        let optsHtml = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">';
+        q.options.forEach((opt, oIdx) => {
+          let isAns = (oIdx === q.ans);
+          let c = isAns 
+            ? 'border-emerald-500 bg-emerald-950/40 text-emerald-300 font-semibold border ' 
+            : 'border-slate-800 text-slate-400 border ';
+
+          optsHtml += `
+            <div class="${c} p-2.5 rounded-lg text-xs flex items-center space-x-2">
+              <span class="font-bold">${letters[oIdx]})</span>
+              <span>${opt}</span>
+              ${isAns ? '<span class="ml-auto text-emerald-400 font-bold">✓ ശരിയുത്തരം</span>' : ''}
+            </div>
+          `;
+        });
+        optsHtml += '</div>';
+
+        const item = document.createElement('div');
+        item.className = 'p-4 rounded-xl border border-slate-700 bg-slate-900/70 space-y-2';
+        item.innerHTML = `
+          <div class="flex justify-between items-start gap-2">
+            <span class="font-bold text-cyan-400 text-sm">ചോദ്യം ${idx + 1}</span>
+            <span class="px-2.5 py-0.5 rounded text-[11px] bg-emerald-950 text-emerald-300 border border-emerald-800 font-bold">Official Key</span>
+          </div>
+          <p class="text-sm font-medium text-slate-200 whitespace-pre-line">${q.q}</p>
+          ${optsHtml}
+          <div class="bg-slate-800 p-2.5 rounded-lg border border-slate-700 mt-2 text-xs leading-relaxed">
+            <span class="font-bold text-cyan-400">വിശദീകരണം:</span>
+            <span class="text-slate-300 ml-1">${q.exp}</span>
+          </div>
+        `;
+        cont.appendChild(item);
+      });
+    }
 
       renderSolutions();
       setupClickableReviewCards();
