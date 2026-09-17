@@ -467,6 +467,51 @@
           const storedUser = localStorage.getItem('sk_user_name');
           if (storedUser && storedUser.trim() !== '') {
             currentUser.name = storedUser.trim();
+            // 🌟 Previous Results വഴി വരുമ്പോൾ നേരിട്ട് റിസൾട്ടിലേക്ക് പോകാൻ
+      const currentFullUrl = window.location.href.toLowerCase();
+      const isReviewMode = currentFullUrl.includes("view=solution") || 
+                           currentFullUrl.includes("solution") || 
+                           urlParams.get('view') === 'solution';
+
+      if (isReviewMode) {
+        if (motivationScreen) {
+          motivationScreen.classList.add('hidden');
+          motivationScreen.style.setProperty('display', 'none', 'important');
+        }
+        if (quizScreen) {
+          quizScreen.classList.add('hidden');
+          quizScreen.classList.remove('flex');
+          quizScreen.style.setProperty('display', 'none', 'important');
+        }
+        if (resultScreen) {
+          resultScreen.classList.remove('hidden');
+          resultScreen.style.setProperty('display', 'block', 'important');
+        }
+
+        // URL-ൽ നിന്ന് മാർക്കുകൾ എടുക്കുന്നു
+        const pScore = urlParams.get('score');
+        const pCorrect = urlParams.get('correct');
+        const pWrong = urlParams.get('wrong');
+        const pSkipped = urlParams.get('skipped');
+
+        document.getElementById('finalScore').innerText = pScore !== null ? Number(pScore).toFixed(2) : "0.00";
+        document.getElementById('correctCount').innerText = pCorrect !== null ? pCorrect : "0";
+        document.getElementById('wrongCount').innerText = pWrong !== null ? pWrong : "0";
+        document.getElementById('skipCount').innerText = pSkipped !== null ? pSkipped : "0";
+
+        const statusElem = document.getElementById('sheetStatus');
+        if (statusElem) statusElem.style.display = 'none';
+
+        const badge = document.getElementById('scoreMotivationBadge');
+        if (badge) {
+          badge.className = "max-w-xl mx-auto p-4 rounded-2xl border border-cyan-500/60 bg-cyan-950/40 text-cyan-300";
+          badge.innerHTML = `📖 <strong>ആൻസർ കീ & വിശദീകരണങ്ങൾ</strong> (Review Mode)`;
+        }
+
+        renderReviewOnlySolutions();
+        setTimeout(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, 100);
+        return;
+      }
           }
         } catch (e) {}
       }
