@@ -214,7 +214,7 @@
         <div id="filterReviewList" class="space-y-4 max-h-[60vh] overflow-y-auto custom-scroll pr-1"></div>
       </div>
 
-      <!-- Permanent Solutions Area at bottom -->
+      <!-- Solutions Area at bottom -->
       <div id="pdfExportWrapper" class="bg-slate-800 border border-slate-700 rounded-2xl p-6 sm:p-8 shadow-2xl">
         <div class="border-b border-slate-700 pb-4 mb-6">
           <h3 class="text-xl font-bold text-cyan-400">ലോക വിപ്ലവങ്ങൾ - ഉത്തര സൂചിക</h3>
@@ -719,7 +719,6 @@
       const downloadBtn = document.getElementById('downloadOriginalNoteBtn');
       const lockNotice = document.getElementById('pdfLockNotice');
 
-      // Cut-off mark condition set to 7.0
       if (scoreNum >= 7.0 && ORIGINAL_PDF_URL) {
         downloadBtn.classList.remove('hidden');
         lockNotice.classList.add('hidden');
@@ -736,6 +735,7 @@
       resultScreen.classList.remove('hidden');
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
+      // 🌟 തെറ്റിയ ചോദ്യങ്ങളുടെ ലിസ്റ്റ് കൃത്യമായി Apps Script-ലേക്ക് അയക്കുന്നു
       sendResultToGoogleSheet({
         name: currentUser.name,
         phone: currentUser.phone,
@@ -743,6 +743,7 @@
         correct: correct,
         wrong: wrong,
         skipped: skipped,
+        wrongQuestions: wrongQuestionsList,
         wrongQuestionsArray: wrongQuestionsList
       });
     }
@@ -991,7 +992,6 @@
       });
     });
 
-    // 🌟 ആദ്യത്തെ ശ്രമം മാത്രം ഫിൽട്ടർ ചെയ്യുകയും മാർക്ക് അനുസരിച്ച് സോർട്ട് ചെയ്യുകയും ചെയ്യുന്ന ലൈവ് റാങ്ക് ലിസ്റ്റ് ഫംഗ്ഷൻ
     function fetchLiveLeaderboard() {
       const modal = document.getElementById('leaderboardModal');
       const loader = document.getElementById('leaderboardLoading');
@@ -1008,7 +1008,6 @@
         return;
       }
 
-      // ബ്രൗസർ കാഷിംഗ് ഒഴിവാക്കാൻ '_t' (timestamp) ചേർത്ത് കോൾ ചെയ്യുന്നു
       fetch(`${GOOGLE_SHEET_WEBAPP_URL}?sheet=${encodeURIComponent(QUIZ_SHEET_NAME)}&_t=${Date.now()}`)
         .then(res => res.json())
         .then(data => {
@@ -1022,39 +1021,33 @@
             return;
           }
 
-          // 1. ആദ്യ ശ്രമം മാത്രം നിലനിർത്തുന്നു (ഫോൺ നമ്പറുകളുടെ ഡ്യൂപ്ലിക്കേഷൻ ഒഴിവാക്കുന്നു)
           const seenPhones = new Set();
           const uniqueLeaderboard = [];
 
           rawList.forEach((entry, index) => {
-            // ഫോൺ നമ്പറിലെ അനാവശ്യ സ്പേസ്, +91, ചിഹ്നങ്ങൾ എന്നിവ മാറ്റി അവസാനത്തെ 10 അക്കങ്ങൾ എടുക്കുന്നു
             let cleanPhone = String(entry.phone || '').replace(/[^0-9]/g, '');
             if (cleanPhone.length >= 10) {
               cleanPhone = cleanPhone.slice(-10);
             }
 
-            // ഫോൺ നമ്പർ ഉണ്ടെങ്കിൽ അത് ആദ്യത്തെ തവണ മാത്രം ലിസ്റ്റിലേക്ക് ചേർക്കും
             if (cleanPhone && cleanPhone !== "0000000000") {
               if (!seenPhones.has(cleanPhone)) {
                 seenPhones.add(cleanPhone);
-                entry.originalIndex = index; // ആദ്യം വന്നയാൾക്ക് മുൻഗണന നൽകാൻ
+                entry.originalIndex = index;
                 uniqueLeaderboard.push(entry);
               }
             } else {
-              // ഫോൺ നമ്പർ ഇല്ലാത്തവരുണ്ടെങ്കിൽ അവരെ സാധാരണ പോലെ ചേർക്കുന്നു
               entry.originalIndex = index;
               uniqueLeaderboard.push(entry);
             }
           });
 
-          // 2. സ്കോർ അടിസ്ഥാനമാക്കി സോർട്ട് ചെയ്യുന്നു (കൂടിയ മാർക്ക് മുകളിൽ, ഒരേ മാർക്കാണെങ്കിൽ ആദ്യം എഴുതിയയാൾ മുകളിൽ)
           uniqueLeaderboard.sort((a, b) => {
             const scoreDiff = parseFloat(b.score) - parseFloat(a.score);
             if (scoreDiff !== 0) return scoreDiff;
             return a.originalIndex - b.originalIndex;
           });
 
-          // 3. ടേബിൾ വരികൾ നിർമ്മിക്കുന്നു
           uniqueLeaderboard.forEach((entry, idx) => {
             let phoneStr = String(entry.phone || '').replace(/[^0-9]/g, '');
             if (phoneStr.length >= 10) phoneStr = phoneStr.slice(-10);
